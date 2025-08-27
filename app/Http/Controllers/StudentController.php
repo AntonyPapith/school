@@ -129,10 +129,10 @@ class StudentController extends Controller
         if (!$student) {
             return redirect()->route('login')->with('error', 'Please log in first.');
         }
-        $studentId = $student->email; // ✅ Extract just the ID
+        $emailId = $student->email; // ✅ Extract just the ID
         // Get the student's selected course IDs from student_details
         $studentCourseIds = DB::table('student_details')
-            ->where('email', $studentId) // make sure column name matches
+            ->where('email', $emailId) // make sure column name matches
             ->pluck('course');
             // dd($studentCourseIds);
         $courses = DB::table('courses')
@@ -141,24 +141,61 @@ class StudentController extends Controller
 
         return view('student.exam_courses', compact('courses'));
     }
-
-    public function viewExam($course_id)
+    
+    public function viewCourseExams($course_id)
     {
-        // Get course name
+        // Get the course
         $course = DB::table('courses')->where('id', $course_id)->first();
         if (!$course) {
             return redirect()->route('student.exam.courses')->with('error', 'Course not found.');
         }
-        // Get all exam questions for this course
-        $questions = DB::table('exam_questions')
-            ->where('course_id', $course_id)
-            ->get();
+        // Get all exams for this course
+        $exams = DB::table('exam_questions')->where('course_id', $course_id)->get();
 
-        return view('student.exam_view', compact('course', 'questions'));
+        return view('student.course_exams', compact('course', 'exams'));
     }
 
+    public function viewExamQuestions($exam_id)
+    {   
+        // dd($exam_id);
+        $student = session('student_user');
+        if (!$student) {
+            return redirect()->route('login')->with('error', 'Please log in first.');
+        }
+        $studentName = $student->name;
+        $studentEmail = $student->email;
+
+        // Get exam details
+        $exam = DB::table('exam_questions')->where('course_id', $exam_id)->first();
+        if (!$exam) {
+            return redirect()->route('student.exam.courses')->with('error', 'Exam not found.');
+        }
+
+        // Get course name
+        $course = DB::table('courses')->where('id', $exam->course_id)->first();
+
+        // Get ALL questions for this exam
+        $questions = DB::table('exam_questions')
+            ->where('course_id', $exam->course_id)
+            ->where('exam_name', $exam->exam_name)
+            ->orderBy('question_number')
+            ->get();
+
+        // ✅ Fetch this student’s answers for this exam
+        $answers = DB::table('exam_answers')
+            ->where('student_email', $student->email)
+            ->where('course_id', $exam->course_id)
+            ->where('exam_name', $exam->exam_name)
+            ->pluck('selected_option', 'question_number')
+            ->toArray(); 
+            // Example: [ '1' => 'a', '2' => 'c' ]
+
+        return view('student.exam_view', compact('course', 'exam', 'questions', 'answers'));
+    }
+    
     public function submitExam(Request $request, $course_id)
     {
+        // dd($course_id);
         $student = session('student_user');
         if (!$student) {
             return redirect()->route('login')->with('error', 'Please log in first.');
@@ -188,12 +225,13 @@ class StudentController extends Controller
 
             // Get the full option text corresponding to the selected letter
             $selectedOptionText = $optionMap[$selectedOption] ?? $selectedOption;
-
+            $examName = DB::table('exam_questions')->where('course_id', $course_id)->value('exam_name');
             DB::table('exam_answers')->insert([
                 'student_name'    => $studentName,
                 'student_email'   => $studentEmail,
                 'course_id'       => $course_id,
                 'course_name'     => $courseName,
+                'exam_name'       => $examName,
                 'question_number' => $questionNumber,
                 'question_text'   => $question->question,
                 'selected_option' => $selectedOptionText,
@@ -202,56 +240,76 @@ class StudentController extends Controller
             ]);
             }
         }
-
         return redirect()->route('student.dashboard')->with('success', 'Exam submitted successfully!');
     }
 
-    public function examResults()
+public function examResults()
 {
-    // Assuming you stored the student email in session when they logged in
     $studentData = session('student_user');
-        $studentEmail = $studentData->email;
-        $studentName = $studentData->name;
+    if (!$studentData) {
+        return redirect()->route('student.login')->with('error', 'Please login first.');
+    }
 
-        $student = DB::table('student')->where('email', $studentEmail)->first();
-        if (!$student) {
-            return redirect()->back()->with('error', 'Student not found.');
-        }
-    // Fetch exam results
+    $studentEmail = $studentData->email;
+    $student = DB::table('student')->where('email', $studentEmail)->first();
+    if (!$student) {
+        return redirect()->back()->with('error', 'Student not found.');
+    }
+
+    // Fetch results grouped by exam_name
     $results = DB::table('exam_answers')
-        ->join('exam_questions', 'exam_answers.question_number', '=', 'exam_questions.question_number')
+        ->join('exam_questions', function ($join) {
+            $join->on('exam_answers.question_number', '=', 'exam_questions.question_number')
+                ->on('exam_answers.course_id', '=', 'exam_questions.course_id');
+        })
         ->join('courses', 'exam_answers.course_id', '=', 'courses.id')
         ->select(
+            'exam_answers.exam_name',
             'courses.name as course_name',
             'exam_answers.question_number',
-            'exam_questions.question as question',
+            'exam_questions.question',
             'exam_answers.selected_option as answer',
             'exam_answers.mark'
         )
         ->where('exam_answers.student_email', $studentEmail)
+        ->orderBy('exam_answers.exam_name')
         ->orderBy('exam_answers.question_number')
-        ->get();
-        // Calculate totals
-        $totalMarks = $results->sum(function ($ans) {
-            return $ans->mark ?? 0;
-        });
-        $maxMarks = count($results) * 2; // Assuming each question is 2 mark
-        // Calculate percentage
+        ->get()
+        ->groupBy('exam_name');  // group by exam
+
+    // Prepare exam summaries
+    $examSummaries = [];
+    foreach ($results as $examName => $examResults) {
+        $allPending = $examResults->every(fn($ans) => $ans->mark === null);
+        $totalMarks = $examResults->sum(fn($ans) => (int) ($ans->mark ?? 0));
+        $maxMarks = count($examResults) * 2; // each question 2 mark
         $percentage = $maxMarks > 0 ? ($totalMarks / $maxMarks) * 100 : 0;
 
-        // Decide message based on percentage
-        if ($percentage == 100) {
-            $resultMessage = "🎉 Excellent! You passed with distinction!";
-        } elseif ($percentage >= 80) {
-            $resultMessage = "👏 Great job! You passed with a high score.";
-        } elseif ($percentage >= 50) {
-            $resultMessage = "🙂 You passed. Keep improving!";
-        } elseif ($percentage >= 25) {
-            $resultMessage = "⚠️ You need improvement.";
-        } else {
-            $resultMessage = "❌ Failed. Work harder and study more.";
+        $resultMessage = null; // default no message
+        if (!$allPending) { // only calculate if at least one mark published
+            if ($percentage == 100) {
+                $resultMessage = "🎉 Excellent! You passed with distinction!";
+            } elseif ($percentage >= 80) {
+                $resultMessage = "👏 Great job! You passed with a high score.";
+            } elseif ($percentage >= 50) {
+                $resultMessage = "🙂 You passed. Keep improving!";
+            } elseif ($percentage >= 25) {
+                $resultMessage = "⚠️ You need improvement.";
+            } else {
+                $resultMessage = "❌ Failed. Work harder and study more.";
+            }
         }
-    return view('student.exam_results', compact('student','results', 'totalMarks', 'maxMarks', 'resultMessage'));
+
+        $examSummaries[$examName] = [
+            'results' => $examResults,
+            'totalMarks' => $totalMarks,
+            'maxMarks' => $maxMarks,
+            'allPending' => $allPending,
+            'resultMessage' => $resultMessage,
+        ];
+    }
+
+    return view('student.exam_results', compact('student', 'examSummaries'));
 }
 
 }

@@ -34,7 +34,6 @@ Route::middleware(['teacher.auth'])->group(function () {
     Route::get('/teacher/exam/{course_id}', [TeacherController::class, 'createExam'])->name('teacher.exam.create');
     Route::post('/teacher/exam/store', [TeacherController::class, 'storeExam'])->name('teacher.exam.store');
     Route::get('/teacher/answer-sheet', [TeacherController::class, 'viewAnswerSheet'])->name('teacher.answer.sheet');
-
     Route::post('/teacher/save-marks/{student_email}/{course_id}', [TeacherController::class, 'saveMarks'])->name('teacher.saveMarks');
    
 });
@@ -43,9 +42,18 @@ Route::middleware(['student.auth'])->group(function () {
     Route::get('/student/dashboard', [StudentController::class, 'studentDashboard'])->name('student.dashboard');
 
     Route::get('/student/exams', [StudentController::class, 'examCourses'])->name('student.exam.courses');
-    Route::get('/student/exam/{course}', [StudentController::class, 'viewExam'])->name('student.exam.view');
+        // Step 1: View exams under a course
+    Route::get('/student/course/{course}/exams', [StudentController::class, 'viewCourseExams'])->name('student.course.exams');
+    // Step 2: View questions under an exam
+    Route::get('/student/exam/{exam}/questions', [StudentController::class, 'viewExamQuestions'])->name('student.exam.questions');
+    
     Route::post('/student/exam/{course}/submit', [StudentController::class, 'submitExam'])->name('student.exam.submit');
+
     Route::get('/student/results', [StudentController::class, 'examResults'])->name('student.exam.results');
+
+// Route::get('/student/exam/{course}', [StudentController::class, 'viewExam'])->name('student.exam.view');
+
+
 });
 
 Route::middleware(['admin.auth'])->group(function () {

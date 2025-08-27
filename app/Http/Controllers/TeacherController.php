@@ -241,10 +241,14 @@ class TeacherController extends Controller
         ->where('id', $course_id)
         ->value('name');
 
+         // Exam name from input
+        $exam_name = $request->exam_name;
+
         foreach ($request->questions as $i => $question) {
             DB::table('exam_questions')->insert([
                 'course_id' => $course_id,
                 'course' => $course,
+                'exam_name' => $exam_name,
                 'question_number' => $i + 1,
                 'question' => $question,
                 'option_a' => $request->options[$i]['a'],
@@ -265,13 +269,13 @@ class TeacherController extends Controller
         $answers = DB::table('exam_answers')
             ->join('student', 'exam_answers.student_email', '=', 'student.email')
             ->join('courses', 'exam_answers.course_id', '=', 'courses.id')
-            // ->join('exam_questions', 'exam_answers.question_number', '=', 'exam_questions.question_number')
             ->select(
                 'student.name as student_name',
                 'student.email as student_email',
                 'courses.name as course_name',
+                'exam_answers.exam_name',
                 'courses.id as course_id',
-                'exam_answers.question_number',
+                'exam_answers.question_number',  
                 'exam_answers.question_text as question',
                 'exam_answers.selected_option as answer',
                 'exam_answers.mark'

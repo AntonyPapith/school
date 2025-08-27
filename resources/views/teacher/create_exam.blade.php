@@ -31,8 +31,13 @@
     <form method="POST" action="{{ route('teacher.exam.store') }}">
         @csrf
         <input type="hidden" name="course_id" value="{{ $course->id }}">
+        
+        <div class="mb-4">
+            <label class="font-semibold">Exam Name</label>
+            <input type="text" name="exam_name" class="w-full border p-2 rounded mt-1" placeholder="Enter exam name (e.g., Exam 1, Final Test)" required>
+        </div>
 
-        @for ($i = 0; $i < 3; $i++)
+        @for ($i = 0; $i < 1; $i++)
             <div class="mb-6 border p-4 rounded bg-gray-50">
                 <label class="font-semibold"  >Question {{ $i+1 }}</label>
                 <input type="text" name="questions[]" class="w-full border p-2 rounded mt-1" placeholder="Enter question" required>
