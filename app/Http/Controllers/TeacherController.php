@@ -78,7 +78,7 @@ class TeacherController extends Controller
 
     public function reject($id)
     {
-        DB::table('teacher_details')->where('id', $id)->update(['status' => 'reject']);
+        DB::table('teacher_details')->where('id', $id)->update(['status' => 'rejected']);
         return redirect()->back()->with('success', 'teacher rejected.');
     }
 

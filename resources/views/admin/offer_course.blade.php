@@ -54,13 +54,13 @@
                 {{-- ✅ Validate --}}
                 <td class="px-4 py-3 whitespace-nowrap">
                   <div class="flex gap-2 flex-wrap md:flex-nowrap">
-                    <form action="{{ route('offer.courses.approve', $course->course_id) }}" method="POST">
+                    <form action="{{ route('offer.courses.approve', $course->id) }}" method="POST">
                       @csrf
                       <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
-                        ✅ Approve
+                        ✅ Approved
                       </button>
                     </form>
-                    <form action="{{ route('offer.courses.reject', $course->course_id) }}" method="POST">
+                    <form action="{{ route('offer.courses.reject', $course->id) }}" method="POST">
                       @csrf
                       <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
                         ❌ Reject
@@ -71,13 +71,13 @@
                 {{-- ✏️ Action --}}
                 <td class="px-4 py-3 whitespace-nowrap">
                   <div class="flex gap-2 flex-wrap md:flex-nowrap">
-                    <a href="{{ route('offer.courses.edit', $course->course_id) }}" class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                    <a href="{{ route('offer.courses.edit', $course->id) }}" class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
                       ✏️ Edit
                     </a>
-                    <form action="{{ route('offer.courses.destroy', $course->course_id) }}" method="POST">
+                    <form action="{{ route('offer.courses.destroy', $course->id) }}" method="POST">
                       @csrf
                       @method('DELETE')
-                      <button type="button" onclick="openConfirmModal( '{{$course->course_id}}' )" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
+                      <button type="button" onclick="openConfirmModal( '{{$course->id}}' )" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium whitespace-nowrap">
                         🗑️ Delete
                       </button>
                     </form>

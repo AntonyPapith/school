@@ -4,7 +4,7 @@
         <nav class="space-y-0 text-lg">
             <a href="#"
                class="flex items-center px-3 py-2 rounded-lg transition 
-                      {{ request()->is('/student/dashboard') ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/20' }}">
+                      {{ request()->routeIs('student.dashboard') ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/20' }}">
                 📚 Course
             </a>
 

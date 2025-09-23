@@ -62,6 +62,44 @@
           </a>
         </div>
       </form>
+
+      <!-- Assigned Courses Table -->
+<div class="mt-12 max-w-4xl">
+    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Assigned Courses</h3>
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">No</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Teacher Name</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Course Name</th>
+                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Assigned At</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @php
+                    $assignments = DB::table('assigned_courses')
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                @endphp
+
+                @forelse($assignments as $index => $assignment)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $assignment->teacher_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $assignment->course_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($assignment->created_at)->format('d M Y, H:i') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">No assignments found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
     </main>
   </div>
 </body>

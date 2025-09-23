@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TeacherController;
@@ -8,14 +9,11 @@ use App\Http\Controllers\StudentController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-// Route::get('/', function () {
-//     return view('new');
-// });
-
-Route::get('/',[AdminController::class,'index'])->name('index');
 
 Route::get('/course/register', [UserController::class, 'courseRegister'])->name('course.register');
 Route::post('/course/register', [UserController::class, 'courseRegisterSave'])->name('course.register.save');
+
+Route::get('/',[AdminController::class,'index'])->name('index');
 
 Route::get('/register', [UserController::class, 'showRegister'])->name('register');
 Route::post('/register', [UserController::class, 'register']);
@@ -99,3 +97,20 @@ Route::middleware(['admin.auth'])->group(function () {
     Route::post('/offerd/course/{id}/approve', [AdminController::class, 'approveOffer'])->name('offer.courses.approve');
     Route::post('/offerd/course/{id}/reject', [AdminController::class, 'rejectOffer'])->name('offer.courses.reject');
 });
+
+// Courses page (all courses)
+Route::get('/courses', function () {
+    $courses = DB::table('courses')->where('status', 'approved')->get();
+    return view('courses', compact('courses'));
+})->name('courses.index');
+
+Route::get('/course/{id}', function ($id) {
+    // Fetch course from database by ID
+    $course = DB::table('courses')->where('id', $id)->first();
+    
+    if (!$course) {
+        abort(404); // show 404 if course not found
+    }
+    return view('course-details', compact('course'));
+})->name('courses.details');
+

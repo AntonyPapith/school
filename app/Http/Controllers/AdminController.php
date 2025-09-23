@@ -10,11 +10,16 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $courses = DB::table('courses')->where('status', 'approved')->get();
+        $courses = DB::table('courses')
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'desc') // latest updated first
+            ->get();
+
         $offers = DB::table('offer_course')
             ->where('status', 'approved')
             ->where('expiry_time', '>', now())
             ->get();        
+
         return view('index', compact('courses', 'offers'));
     }
 
@@ -119,49 +124,50 @@ class AdminController extends Controller
         return redirect()->route('offer.course')->with('success', 'Offer course added successfully!');
     }
 
-    public function offerCourseEdit($id)
-    {
-        $course = DB::table('offer_course')->where('course_id', $id)->first();
-        return view('admin.edit_offer_course', compact('course'));
-    }
+public function offerCourseEdit($id)
+{
+    $course = DB::table('offer_course')->where('id', $id)->first();
+    return view('admin.edit_offer_course', compact('course'));
+}
 
-    public function offerCourseUpdate(Request $request, $id)
-    {
-        DB::table('offer_course')->where('course_id', $id)->update([
-            'course_name' => $request->course_name,
-            'course_description' => $request->course_description,
-            'course_price' => $request->course_price,
-        ]);
+public function offerCourseUpdate(Request $request, $id)
+{
+    DB::table('offer_course')->where('id', $id)->update([
+        'course_name' => $request->course_name,
+        'course_description' => $request->course_description,
+        'course_price' => $request->course_price,
+    ]);
 
-        return redirect()->route('offer.course')->with('success', 'Offer Course updated successfully!');
-    }
+    return redirect()->route('offer.course')->with('success', 'Offer Course updated successfully!');
+}
 
-    public function destroyOffer($id)
-    {
-        DB::table('offer_course')->where('course_id', $id)->delete();
-        return redirect()->route('offer.course')->with('success', 'Offer Course deleted successfully!');
-    }
+public function destroyOffer($id)
+{
+    DB::table('offer_course')->where('id', $id)->delete();
+    return redirect()->route('offer.course')->with('success', 'Offer Course deleted successfully!');
+}
 
-    public function approveOffer($id)
-    {
-        $offer = DB::table('offer_course')->where('course_id', $id)->first();
-        if ($offer) {
-            DB::table('offer_course')
-                ->where('course_id', $id)
-                ->update([
-                    'status' => 'approved',
-                    'expiry_time' => now()->addHours((int) $offer->offer_hours), // start countdown from approval
-                    'updated_at' => now()
-                ]);
-                return redirect()->route('offer.course')->with('success', 'Offer course approved successfully!');
-        }
-        return redirect()->route('offer.course')->with('error', 'Course not found!');
+public function approveOffer($id)
+{
+    $offer = DB::table('offer_course')->where('id', $id)->first();
+    if ($offer) {
+        DB::table('offer_course')
+            ->where('id', $id)
+            ->update([
+                'status' => 'approved',
+                'expiry_time' => now()->addHours((int) $offer->offer_hours),
+                'updated_at' => now()
+            ]);
+        return redirect()->route('offer.course')->with('success', 'Offer course approved successfully!');
     }
+    return redirect()->route('offer.course')->with('error', 'Course not found!');
+}
 
-    public function rejectOffer($id)
-    {
-        DB::table('offer_course')->where('course_id', $id)->update(['status' => 'rejected']);
-        return redirect()->route('offer.course')->with('success', 'Offer Course rejected successfully!');
-    }
+public function rejectOffer($id)
+{
+    DB::table('offer_course')->where('id', $id)->update(['status' => 'rejected']);
+    return redirect()->route('offer.course')->with('success', 'Offer Course rejected successfully!');
+}
+
 
 }
