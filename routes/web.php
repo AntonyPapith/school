@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\StudentController;
 use App\Models\User;
+use App\Http\Controllers\VideoCallController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -33,7 +34,11 @@ Route::middleware(['teacher.auth'])->group(function () {
     Route::post('/teacher/exam/store', [TeacherController::class, 'storeExam'])->name('teacher.exam.store');
     Route::get('/teacher/answer-sheet', [TeacherController::class, 'viewAnswerSheet'])->name('teacher.answer.sheet');
     Route::post('/teacher/save-marks/{student_email}/{course_id}', [TeacherController::class, 'saveMarks'])->name('teacher.saveMarks');
-   
+
+
+Route::get('/teacher/video-calls', [VideoCallController::class, 'teacherCalls'])->name('teacher.video.calls');
+Route::post('/teacher/video-call/{student}', [VideoCallController::class, 'sendRequest'])->name('teacher.video.call.send');
+
 });
 
 Route::middleware(['student.auth'])->group(function () {
@@ -51,6 +56,11 @@ Route::middleware(['student.auth'])->group(function () {
 
 // Route::get('/student/exam/{course}', [StudentController::class, 'viewExam'])->name('student.exam.view');
 
+// Student video calls
+Route::get('/student/video-calls', [StudentController::class, 'studentCalls'])->name('student.video.calls');
+
+Route::post('/student/video-call/{call}/accept', [VideoCallController::class, 'acceptRequest'])->name('student.video.call.accept');
+Route::post('/student/video-call/{call}/reject', [VideoCallController::class, 'rejectRequest'])->name('student.video.call.reject');
 
 });
 

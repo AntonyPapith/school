@@ -312,4 +312,45 @@ public function examResults()
     return view('student.exam_results', compact('student', 'examSummaries'));
 }
 
+
+    // ✅ Show video call page with teacher details and notifications
+    // Show student video call page
+public function studentCalls()
+{
+    // Get student from session
+    $student = session('student_user');
+
+    if (!$student) {
+        abort(403, 'Student not logged in.');
+    }
+
+    // Get student's course id from student_details table
+    $studentDetail = DB::table('student_details')
+        ->where('id', $student->id)
+        ->first();
+
+    if (!$studentDetail) {
+        abort(404, 'Student details not found.');
+    }
+
+    $studentCourseId = $studentDetail->id; // this is course_id
+
+    // Fetch teachers assigned to this course
+    $teachers = DB::table('assigned_courses')
+        ->join('teacher_details', 'assigned_courses.teacher_id', '=', 'teacher_details.id')
+        ->where('assigned_courses.course_id', $studentCourseId)
+        ->where('teacher_details.status', 'approved')
+        ->select(
+            'teacher_details.id',
+            'teacher_details.name',
+            'teacher_details.email',
+            'assigned_courses.course_name'
+        )
+        ->get();
+
+    return view('student.video_calls', compact('teachers'));
+}
+
+
+
 }

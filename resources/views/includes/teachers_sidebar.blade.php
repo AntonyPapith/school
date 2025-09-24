@@ -33,6 +33,13 @@
                       {{ request()->routeIs('teacher.answer.sheet') ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/20' }}">
                 ✅ Answer Sheet
             </a>
+
+            <a href="{{ route('teacher.video.calls') }}"
+            class="flex items-center px-3 py-2 rounded-lg transition
+                    {{ request()->routeIs('teacher.video.calls') ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/20' }}">
+                🎥 Video Call
+            </a>
+
         </nav>
     </div>
 
